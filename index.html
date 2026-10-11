@@ -87,6 +87,7 @@ input,select{width:100%;padding:12px;border:1px solid var(--bd);border-radius:12
 .it.sel{outline:2px solid var(--ac);outline-offset:-1px}
 .it.sel .ck{background:var(--ac);border-color:var(--ac)}
 .it.sel .ck::after{content:'✓';color:#fff;font-size:14px;font-weight:700;position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.sa.m{color:var(--ac)}
 </style>
 </head>
 <body>
@@ -140,8 +141,9 @@ input,select{width:100%;padding:12px;border:1px solid var(--bd);border-radius:12
   </div>
 </div>
 
+<div id="msheet" style="position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;z-index:9"><div class="card" style="width:100%;max-width:520px;margin:0 auto;border-radius:20px 20px 0 0;max-height:80%;overflow:auto;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))"><b>نقل الفواتير المحددة إلى مجلد شهر</b><div id="mvl" style="margin-top:10px"></div><label>أو شهر جديد</label><div class="row"><select id="mvm" style="flex:2;min-width:0"></select><select id="mvy" style="flex:1.2;min-width:0"></select><button class="btn" id="mvGo" style="width:auto;margin:0;padding:0 16px">نقل</button></div><button class="back" id="mvCancel" style="width:100%;margin-top:10px">إلغاء</button></div></div>
 <div id="selbar"><button id="sx" aria-label="إلغاء">✕</button><b id="sn">0 محدد</b><button id="sall">تحديد الكل</button></div>
-<div id="selact"><button class="sa w" id="sSend"></button><button class="sa d" id="sDel"></button></div>
+<div id="selact"><button class="sa w" id="sSend"></button><button class="sa m" id="sMove"></button><button class="sa d" id="sDel"></button></div>
 <div id="wsheet" style="position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;z-index:8"><div class="card" style="width:100%;max-width:520px;margin:0 auto;border-radius:20px 20px 0 0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))"><b>رقم الواتساب المحفوظ</b><label>اكتب الرقم (مثال: 05xxxxxxxx أو 9665xxxxxxxx)</label><div class="row"><input id="wnum" type="tel" inputmode="tel" placeholder="05xxxxxxxx"><button class="btn" id="wsave" style="width:auto;margin:0;padding:0 18px">حفظ</button></div><div id="wst" style="font-size:12px;color:var(--mut);margin-top:6px"></div><button class="back" id="wclose" style="width:100%;margin-top:10px">إغلاق</button></div></div>
 <div id="sheet" style="position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;z-index:8"><div class="card" style="width:100%;max-width:520px;margin:0 auto;border-radius:20px 20px 0 0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))"><b>إرسال الفاتورة عبر الواتساب</b><label id="sAttRow" style="display:none;align-items:center;gap:8px;color:var(--tx);font-size:15px;margin:12px 0 2px"><input type="checkbox" id="sAtt" checked style="width:auto"> إرفاق صورة الفاتورة</label><div id="sHint" style="font-size:12px;color:var(--mut)">مع الصورة تفتح قائمة المشاركة: اختر واتساب ثم الشخص</div><button class="btn" id="sSaved"></button><label>أو لرقم آخر (ما ينحفظ)</label><div class="row"><input id="sOther" type="tel" inputmode="tel" placeholder="9665xxxxxxxx"><button class="btn" id="sGo" style="width:auto;margin:0;padding:0 18px">إرسال</button></div><button class="btn" id="sPick" style="background:var(--bg);color:var(--tx);border:1px solid var(--bd)">اختيار من جهات الواتساب</button><button class="back" id="sCancel" style="width:100%;margin-top:10px">إلغاء</button></div></div>
 <div id="big"><span style="position:absolute;top:calc(14px + env(safe-area-inset-top,0px));inset-inline-start:18px;color:#fff;font-size:28px">✕</span><img id="bigimg"></div>
@@ -185,11 +187,11 @@ $('save').onclick=function(){
   if(!(a>0)||!(p>0)){alert('أدخل المبلغ وسعر اللتر');return}
   var rec={id:editId||Date.now(),type:type,amt:a,price:p,lit:a/p,dt:$('dt').value||nowLocal(),img:photo},k=-1;
   inv.forEach(function(y,j){if(y.id===editId)k=j});
-  if(k>=0)inv[k]=rec;else inv.unshift(rec);
+  if(k>=0&&inv[k].mo&&inv[k].dt.slice(0,7)===rec.dt.slice(0,7))rec.mo=inv[k].mo;if(k>=0)inv[k]=rec;else inv.unshift(rec);
   if(!LS.set('fuel_inv',inv)){rec.img='';LS.set('fuel_inv',inv);alert('المساحة ممتلئة، تم حفظ الفاتورة بدون الصورة')}
   editId=null;$('amt').value='';photo='';$('prev').hidden=true;$('file').value='';calc();render();var r=ret;ret='home';show(r);if(r==='month')renderMonth()};
 
-function fmt(s){try{var d=new Date(s);return d.toLocaleString('ar-SA-u-ca-gregory',{dateStyle:'medium',timeStyle:'short'})+' | '+d.toLocaleDateString('ar-SA-u-ca-islamic-umalqura',{dateStyle:'medium'})}catch(e){return s}}
+function fmt(s){try{var d=new Date(s);return d.toLocaleString('ar-SA-u-ca-gregory-nu-latn',{dateStyle:'medium',timeStyle:'short'})+' | '+d.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn',{dateStyle:'medium'})}catch(e){return s}}
 var HM=['محرم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
 $('hm').innerHTML=HM.map(function(n,i){return '<option value="'+(i+1)+'">'+n+'</option>'}).join('');
 var HF=new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn',{day:'numeric',month:'numeric',year:'numeric'});
@@ -198,14 +200,14 @@ function h2g(y,m,d){var e=new Date(Date.UTC(622,6,19)+((y-1)*354.3671+(m-1)*29.5
  for(var k=-45;k<=45;k++){var t=new Date(b.getFullYear(),b.getMonth(),b.getDate()+k,12),h=h2parts(t);if(h.year===y&&h.month===m&&h.day===d)return t}return null}
 function pad(n){return (n<10?'0':'')+n}
 function fillH(){var v=$('dt').value;if(!v)return;var h=h2parts(new Date(v));setF('hd',h.day);setF('hm',h.month);setF('hy',h.year)}
-function fromH(){var y=+$('hy').value,m=+$('hm').value,d=+$('hd').value;if(!(y>1300&&y<1600&&d>=1&&d<=30))return;var t=h2g(y,m,d);if(!t){$('dtp').textContent='تاريخ هجري غير صحيح';return}var c=$('dt').value||nowLocal();$('dt').value=t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate())+'T'+c.slice(11,16);dtp()}
+function fromH(){var y=+$('hy').value,m=+$('hm').value,d=+$('hd').value;if(!(y>1300&&y<1600&&d>=1&&d<=30))return;var t=h2g(y,m,d);if(!t&&d>29){d=29;t=h2g(y,m,d);setF('hd',d)}if(!t){$('dtp').textContent='تاريخ هجري غير صحيح';return}var c=$('dt').value||nowLocal();$('dt').value=t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate())+'T'+c.slice(11,16);dtp()}
 fillSel('hd',1,30);fillSel('hy',1436,1462);
 $('hd').onchange=fromH;$('hy').onchange=fromH;$('hm').onchange=fromH;
 function setF(i,n){var e=$(i);if(!e.querySelector('option[value="'+n+'"]')){var o=document.createElement('option');o.value=n;o.textContent=n;var nx=[].slice.call(e.options).filter(function(x){return +x.value>n})[0];e.insertBefore(o,nx||null)}if(e.value!==String(n))e.value=n}
 function dtp(){var v=$('dt').value,q=v.slice(0,10).split('-');$('dtp').textContent=fmt(v);fillH();if(q.length<3)return;setF('gd',+q[2]);setF('gm',+q[1]);setF('gy',+q[0]);if($('tt').value!==v.slice(11,16))$('tt').value=v.slice(11,16)}
 var GM=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 $('gm').innerHTML=GM.map(function(n,i){return '<option value="'+(i+1)+'">'+n+'</option>'}).join('');
-function fromD(){var y=+$('gy').value,m=+$('gm').value,d=+$('gd').value;if(!(y>1900&&y<2200&&d>=1))return;var t=new Date(y,m-1,d,12);if(t.getMonth()!==m-1){$('dtp').textContent='تاريخ ميلادي غير صحيح';return}$('dt').value=y+'-'+pad(m)+'-'+pad(d)+'T'+($('tt').value||'00:00');dtp()}
+function fromD(){var y=+$('gy').value,m=+$('gm').value,d=+$('gd').value;if(!(y>1900&&y<2200&&d>=1))return;var t=new Date(y,m-1,d,12);if(t.getMonth()!==m-1){d=new Date(y,m,0).getDate();setF('gd',d)}$('dt').value=y+'-'+pad(m)+'-'+pad(d)+'T'+($('tt').value||'00:00');dtp()}
 function fillSel(id,a,b){var s='';for(var i=a;i<=b;i++)s+='<option value="'+i+'">'+i+'</option>';$(id).innerHTML=s}
 fillSel('gd',1,31);fillSel('gy',2015,2040);
 $('gd').onchange=fromD;$('gy').onchange=fromD;$('gm').onchange=fromD;$('tt').oninput=function(){var v=$('dt').value.slice(0,10)+'T'+($('tt').value||'00:00');$('dt').value=v;$('dtp').textContent=fmt(v)};
@@ -231,8 +233,8 @@ go()}
 var SV='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
 var IC={w:SV+'<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>',e:SV+'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',d:SV+'<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>'};
 var flt='all';
-function dparts(v){var d=new Date(v);return{g:d.toLocaleDateString('ar-SA-u-ca-gregory',{day:'numeric',month:'long',year:'numeric'}),t:d.toLocaleTimeString('ar-SA',{hour:'numeric',minute:'2-digit'}),h:d.toLocaleDateString('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'})}}
-function monthName(k){return new Date(k+'-01T12:00').toLocaleDateString('ar-SA-u-ca-gregory',{month:'long',year:'numeric'})}
+function dparts(v){var d=new Date(v);return{g:d.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{day:'numeric',month:'long',year:'numeric'}),t:d.toLocaleTimeString('ar-SA-u-nu-latn',{hour:'numeric',minute:'2-digit'}),h:d.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn',{day:'numeric',month:'long',year:'numeric'})}}
+function monthName(k){return new Date(k+'-01T12:00').toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{month:'long',year:'numeric'})}
 function card(i){var x=inv[i],d=dparts(x.dt);
   return '<div class="it t'+x.type+(sel[x.id]?' sel':'')+'" data-k="'+x.id+'"><div class="ir"><div class="ck"></div><div class="fb">'+x.type+'</div><div class="im"><div class="ia"><b>'+x.amt.toFixed(2)+'</b><span>ر.س</span></div><div class="ib2">'+x.lit.toFixed(2)+' لتر · '+x.price.toFixed(2)+' ر.س/لتر</div><div class="id">'+d.g+' · '+d.t+'</div><div class="id">'+d.h+'</div></div>'+(x.img?'<img src="'+x.img+'" data-i="'+i+'">':'')+'</div>'+
   '<div class="ac"><button class="ab w" data-w="'+i+'">'+IC.w+'إرسال</button><button class="ab e" data-e="'+i+'">'+IC.e+'تعديل</button><button class="ab d" data-d="'+i+'">'+IC.d+'حذف</button></div></div>'}
@@ -242,21 +244,21 @@ function money(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maxim
 var FOLDER='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
 function render(){
   var tk=nowLocal().slice(0,7),all=inv.map(function(x,i){return i});
-  var cur=all.filter(function(i){return inv[i].dt.slice(0,7)>=tk&&(flt==='all'||inv[i].type===flt)}).sort(byDate);
+  var cur=all.filter(function(i){return mk(inv[i])>=tk&&(flt==='all'||inv[i].type===flt)}).sort(byDate);
   var h=cur.map(card).join('');
   if(!cur.length)h='<div class="empty">'+(flt==='all'?'ما فيه فواتير هذا الشهر بعد<br>اضغط «إضافة فاتورة» للبدء':'لا توجد فواتير لهذا النوع هذا الشهر')+'</div>';
   $('list').innerHTML=h;
   var m=sums(cur);
   $('hl').textContent=(flt==='all'?'إجمالي ':'بنزين '+flt+' · ')+monthName(tk);
   $('sa').textContent=money(m.A);$('sc').textContent=cur.length;$('sl').textContent=m.L.toFixed(1);$('sp').textContent=m.L>0?(m.A/m.L).toFixed(2):'—';
-  var g={};all.forEach(function(i){var k=inv[i].dt.slice(0,7);if(k<tk){(g[k]=g[k]||[]).push(i)}});
+  var g={};all.forEach(function(i){var k=mk(inv[i]);if(k<tk){(g[k]=g[k]||[]).push(i)}});
   var ks=Object.keys(g).sort().reverse(),ah='';
   if(ks.length){ah='<div class="mh"><span>الأشهر السابقة</span><span>'+ks.length+'</span></div>'+ks.map(function(k){var q=sums(g[k]);
     return '<button class="mf" data-m="'+k+'"><div class="mfi">'+FOLDER+'</div><div class="mft"><b>'+monthName(k)+'</b><small>'+g[k].length+' فاتورة · '+q.L.toFixed(1)+' لتر</small></div><div class="mfa">'+money(q.A)+' ر.س</div></button>'}).join('')}
   $('arch').innerHTML=ah;
   if(curMonth)renderMonth()}
 function renderMonth(){
-  var ix=inv.map(function(x,i){return i}).filter(function(i){return inv[i].dt.slice(0,7)===curMonth}).sort(byDate);
+  var ix=inv.map(function(x,i){return i}).filter(function(i){return mk(inv[i])===curMonth}).sort(byDate);
   if(!ix.length){if($('month').style.display==='block'){curMonth=null;show('home')}return}
   var m=sums(ix);
   $('mTitle').textContent=monthName(curMonth);
@@ -293,6 +295,21 @@ $('sall').onclick=function(){var els=[].slice.call(selRoot().querySelectorAll('.
   if(all){exitSel();return}els.forEach(function(e){sel[e.dataset.k]=true});updSel()};
 $('sSend').innerHTML=IC.w+'إرسال';$('sDel').innerHTML=IC.d+'حذف';
 function multiMsg(l){var A=0,L=0,t='⛽ فواتير بنزين ('+l.length+')\n';l.forEach(function(x){A+=x.amt;L+=x.lit;t+='\n• '+x.type+' | '+x.amt.toFixed(2)+' ر.س | '+x.lit.toFixed(2)+' لتر | '+dparts(x.dt).g});return t+'\n\nالمجموع: '+A.toFixed(2)+' ر.س · '+L.toFixed(2)+' لتر'}
+function mk(x){return x.mo||x.dt.slice(0,7)}
+$('sMove').innerHTML=FOLDER+'نقل';
+function openMove(){
+  var tk=nowLocal().slice(0,7),c={};c[tk]=0;inv.forEach(function(x){var k=mk(x);c[k]=(c[k]||0)+1});
+  var ks=Object.keys(c).sort().reverse();
+  $('mvl').innerHTML=ks.map(function(k){return '<button class="mf" data-mv="'+k+'"><div class="mfi">'+FOLDER+'</div><div class="mft"><b>'+monthName(k)+(k===tk?' · الشهر الحالي':'')+'</b><small>'+c[k]+' فاتورة</small></div></button>'}).join('');
+  var y=+tk.slice(0,4),ys='';for(var i=y-4;i<=y+1;i++)ys+='<option value="'+i+'"'+(i===y?' selected':'')+'>'+i+'</option>';
+  $('mvy').innerHTML=ys;$('mvm').innerHTML=GM.map(function(n,i){return '<option value="'+(i+1)+'"'+(i+1===+tk.slice(5,7)?' selected':'')+'>'+n+'</option>'}).join('');
+  $('msheet').style.display='flex'}
+function doMove(k){inv.forEach(function(x){if(sel[x.id])x.mo=k});LS.set('fuel_inv',inv);$('msheet').style.display='none';exitSel();render();toast('تم النقل إلى '+monthName(k))}
+$('sMove').onclick=function(){if(selKeys().length)openMove()};
+$('mvl').onclick=function(e){var k=e.target.dataset.mv;if(k)doMove(k)};
+$('mvGo').onclick=function(){doMove($('mvy').value+'-'+pad(+$('mvm').value))};
+$('mvCancel').onclick=function(){$('msheet').style.display='none'};
+$('msheet').onclick=function(e){if(e.target===$('msheet'))$('msheet').style.display='none'};
 $('sSend').onclick=function(){var l=inv.filter(function(x){return sel[x.id]}).sort(function(a,b){return a.dt<b.dt?-1:1});if(l.length)openSheet({multi:l})};
 $('sDel').onclick=function(){var n=selKeys().length;if(!n||!confirm('حذف '+n+' فاتورة؟'))return;inv=inv.filter(function(x){return !sel[x.id]});LS.set('fuel_inv',inv);exitSel();render()};
 
